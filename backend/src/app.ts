@@ -18,6 +18,7 @@ import authRoutes        from './modules/auth/auth.routes';
 import attendanceRoutes  from './modules/attendance/attendance.routes';
 import reportRoutes      from './modules/reports/report.routes';
 import projectRoutes     from './modules/projects/project.routes';
+import analyticsRoutes   from './modules/analytics/analytics.routes';
 
 /**
  * Creates and returns a fully configured Express application.
@@ -83,6 +84,7 @@ export function createApp(): Application {
   app.use('/api/v1/attendance', attendanceRoutes);
   app.use('/api/v1/reports',    reportRoutes);
   app.use('/api/v1/projects',   projectRoutes);
+  app.use('/api/v1/analytics',  analyticsRoutes);
   // Future phases will add:
   // app.use('/api/v1/users',         usersRoutes);
   // app.use('/api/v1/programs',      programsRoutes);

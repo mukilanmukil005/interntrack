@@ -16,6 +16,7 @@ import { Prisma, ProjectStatus, MilestoneStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { AppError } from '../../utils/app-error';
 import { parsePagination, buildPaginationMeta } from '../../utils/pagination.util';
+import { roundPercentage } from '../../utils/math.util';
 import type {
   CreateProjectInput,
   UpdateProjectInput,
@@ -70,7 +71,7 @@ function safeDeleteFile(filePath: string | null | undefined): void {
 function calculateCompletionPercentage(milestones: { completionPercentage: number }[]): number {
   if (!milestones || milestones.length === 0) return 0;
   const sum = milestones.reduce((acc, m) => acc + m.completionPercentage, 0);
-  return Math.round(sum / milestones.length);
+  return roundPercentage(sum / milestones.length);
 }
 
 /**
