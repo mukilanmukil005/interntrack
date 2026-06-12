@@ -12,11 +12,13 @@
 
 import path from 'path';
 import fs from 'fs';
-import { Prisma, ProjectStatus, MilestoneStatus, Role } from '@prisma/client';
+import { Prisma, ProjectStatus, MilestoneStatus, Role, NotificationType } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { AppError } from '../../utils/app-error';
 import { parsePagination, buildPaginationMeta } from '../../utils/pagination.util';
 import { roundPercentage } from '../../utils/math.util';
+import { createNotification } from '../notifications/notification.service';
+import { logger } from '../../config/logger';
 import type {
   CreateProjectInput,
   UpdateProjectInput,
@@ -572,11 +574,11 @@ export async function reviewMilestone(
   input: ReviewMilestoneInput
 ) {
   // Enforce mentor access rights
-  await getProjectWithAccess(projectId, mentorUserId, Role.MENTOR);
+  const project = await getProjectWithAccess(projectId, mentorUserId, Role.MENTOR);
 
   const milestone = await prisma.milestone.findUnique({
     where: { id: milestoneId },
-    select: { id: true, projectId: true },
+    select: { id: true, projectId: true, title: true },
   });
 
   if (!milestone || milestone.projectId !== projectId) {
@@ -593,10 +595,24 @@ export async function reviewMilestone(
     updateData.completionPercentage = 100;
   }
 
-  return prisma.milestone.update({
+  const updatedMilestone = await prisma.milestone.update({
     where: { id: milestoneId },
     data: updateData,
   });
+
+  // Trigger notification (non-blocking failure policy)
+  try {
+    const notificationTitle = input.status === MilestoneStatus.COMPLETED ? 'Milestone Approved' : 'Milestone Revision Required';
+    const notificationMsg = input.status === MilestoneStatus.COMPLETED
+      ? `Your milestone "${milestone.title}" has been approved.`
+      : `Your milestone "${milestone.title}" requires revision. Feedback: ${input.mentorFeedback || 'None'}`;
+
+    await createNotification(project.intern.userId, notificationTitle, notificationMsg, NotificationType.GENERAL);
+  } catch (error) {
+    logger.warn(`Failed to trigger milestone review notification: ${error}`);
+  }
+
+  return updatedMilestone;
 }
 
 // ── SHARED/ALL ROLES: Get Single Project by ID ────────────────────────────────

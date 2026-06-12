@@ -13,9 +13,11 @@
 
 import path                              from 'path';
 import fs                                from 'fs';
-import { Prisma, ReportStatus, Role }    from '@prisma/client';
+import { Prisma, ReportStatus, Role, NotificationType } from '@prisma/client';
 import { prisma }                        from '../../config/database';
 import { AppError }                      from '../../utils/app-error';
+import { createNotification }            from '../notifications/notification.service';
+import { logger }                        from '../../config/logger';
 import {
   parsePagination,
   buildPaginationMeta,
@@ -372,7 +374,7 @@ export async function reviewReport(
 ) {
   const report = await prisma.dailyReport.findUnique({
     where:   { id: reportId },
-    include: { intern: { select: { mentorId: true } } },
+    include: { intern: { select: { id: true, userId: true, mentorId: true } } },
   });
 
   if (!report) throw AppError.notFound('Report not found.');
@@ -392,7 +394,7 @@ export async function reviewReport(
     ? ReportStatus.APPROVED
     : ReportStatus.REJECTED;
 
-  return prisma.dailyReport.update({
+  const updatedReport = await prisma.dailyReport.update({
     where: { id: reportId },
     data: {
       status:        newStatus,
@@ -400,6 +402,24 @@ export async function reviewReport(
       reviewedAt:    new Date(),
     },
   });
+
+  // Trigger notification (non-blocking failure policy)
+  try {
+    const reportDateStr = new Date(report.date).toISOString().split('T')[0];
+    const notificationTitle = newStatus === ReportStatus.APPROVED ? 'Daily Report Approved' : 'Daily Report Rejected';
+    const notificationMsg = newStatus === ReportStatus.APPROVED
+      ? `Your daily report for ${reportDateStr} has been approved.`
+      : `Your daily report for ${reportDateStr} has been rejected. Feedback: ${input.mentorComment || 'None'}`;
+    const notificationType = newStatus === ReportStatus.APPROVED
+      ? NotificationType.REPORT_APPROVED
+      : NotificationType.REPORT_REJECTED;
+
+    await createNotification(report.intern.userId, notificationTitle, notificationMsg, notificationType);
+  } catch (error) {
+    logger.warn(`Failed to trigger daily report notification: ${error}`);
+  }
+
+  return updatedReport;
 }
 
 // ── MENTOR: View reports from assigned interns ────────────────────────────────
