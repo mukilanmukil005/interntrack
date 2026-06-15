@@ -1,17 +1,20 @@
 // =============================================================================
 // File: frontend/src/App.tsx
-// Purpose: Main App entry defining public layout routes, protected placeholders, and lazy routing
+// Purpose: Main App entry defining public layout routes, protected admin routes, and lazy routing
 // =============================================================================
 
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PublicLayout } from './layouts/PublicLayout';
 import { RouteGuard } from './layouts/RouteGuard';
+import { AdminLayout } from './layouts/AdminLayout';
 import { useAuth } from './hooks/useAuth';
-import { LogOut, GraduationCap, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { LogOut, GraduationCap, CheckCircle2 } from 'lucide-react';
 
-// Lazy-loaded page components (named exports require mapping to default)
+// ---------------------------------------------------------------------------
+// Lazy-loaded Public pages
+// ---------------------------------------------------------------------------
 const HomePage = React.lazy(() =>
   import('./pages/public/HomePage').then((m) => ({ default: m.HomePage }))
 );
@@ -32,6 +35,22 @@ const LoginPage = React.lazy(() =>
 );
 const RegisterPage = React.lazy(() =>
   import('./pages/auth/RegisterPage').then((m) => ({ default: m.RegisterPage }))
+);
+
+// ---------------------------------------------------------------------------
+// Lazy-loaded Admin pages
+// ---------------------------------------------------------------------------
+const AdminOverviewPage = React.lazy(() =>
+  import('./pages/admin/AdminOverviewPage').then((m) => ({ default: m.AdminOverviewPage }))
+);
+const AdminProjectsPage = React.lazy(() =>
+  import('./pages/admin/AdminProjectsPage').then((m) => ({ default: m.AdminProjectsPage }))
+);
+const AdminNotificationsPage = React.lazy(() =>
+  import('./pages/admin/AdminNotificationsPage').then((m) => ({ default: m.AdminNotificationsPage }))
+);
+const AdminProfilePage = React.lazy(() =>
+  import('./pages/admin/AdminProfilePage').then((m) => ({ default: m.AdminProfilePage }))
 );
 
 // Loading Fallback spinner
@@ -122,13 +141,7 @@ const DashboardWrapper: React.FC<{ title: string; subtitle: string; icon: React.
   );
 };
 
-const AdminDashboard: React.FC = () => (
-  <DashboardWrapper
-    title="Admin Control Center"
-    subtitle="Configure internship durations, assign mentors, and review college grading sheets."
-    icon={<LayoutGrid className="h-8 w-8" />}
-  />
-);
+// AdminDashboard placeholder removed — replaced by AdminLayout + admin sub-routes below.
 
 const MentorDashboard: React.FC = () => (
   <DashboardWrapper
@@ -172,15 +185,25 @@ function App() {
               <Route path="register" element={<RegisterPage />} />
             </Route>
 
-            {/* Protected Routes (Role-based Placeholders) */}
+            {/* ---------------------------------------------------------------- */}
+            {/* Admin Dashboard — protected, nested under AdminLayout           */}
+            {/* ---------------------------------------------------------------- */}
             <Route
-              path="/admin/*"
+              path="/admin"
               element={
                 <RouteGuard allowedRoles={['ADMIN']}>
-                  <AdminDashboard />
+                  <AdminLayout />
                 </RouteGuard>
               }
-            />
+            >
+              {/* Index → Overview */}
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="projects" element={<AdminProjectsPage />} />
+              <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
+              {/* Unmatched admin sub-paths → overview */}
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Route>
             <Route
               path="/mentor/*"
               element={
