@@ -9,8 +9,9 @@ import { AuthProvider } from './context/AuthContext';
 import { PublicLayout } from './layouts/PublicLayout';
 import { RouteGuard } from './layouts/RouteGuard';
 import { AdminLayout } from './layouts/AdminLayout';
+import { MentorLayout } from './layouts/MentorLayout';
 import { useAuth } from './hooks/useAuth';
-import { LogOut, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { LogOut, GraduationCap } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded Public pages
@@ -51,6 +52,28 @@ const AdminNotificationsPage = React.lazy(() =>
 );
 const AdminProfilePage = React.lazy(() =>
   import('./pages/admin/AdminProfilePage').then((m) => ({ default: m.AdminProfilePage }))
+);
+
+// ---------------------------------------------------------------------------
+// Lazy-loaded Mentor pages
+// ---------------------------------------------------------------------------
+const MentorOverviewPage = React.lazy(() =>
+  import('./pages/mentor/MentorOverviewPage').then((m) => ({ default: m.MentorOverviewPage }))
+);
+const MentorInternsPage = React.lazy(() =>
+  import('./pages/mentor/MentorInternsPage').then((m) => ({ default: m.MentorInternsPage }))
+);
+const MentorReportsPage = React.lazy(() =>
+  import('./pages/mentor/MentorReportsPage').then((m) => ({ default: m.MentorReportsPage }))
+);
+const MentorProjectsPage = React.lazy(() =>
+  import('./pages/mentor/MentorProjectsPage').then((m) => ({ default: m.MentorProjectsPage }))
+);
+const MentorNotificationsPage = React.lazy(() =>
+  import('./pages/mentor/MentorNotificationsPage').then((m) => ({ default: m.MentorNotificationsPage }))
+);
+const MentorProfilePage = React.lazy(() =>
+  import('./pages/mentor/MentorProfilePage').then((m) => ({ default: m.MentorProfilePage }))
 );
 
 // Loading Fallback spinner
@@ -143,13 +166,7 @@ const DashboardWrapper: React.FC<{ title: string; subtitle: string; icon: React.
 
 // AdminDashboard placeholder removed — replaced by AdminLayout + admin sub-routes below.
 
-const MentorDashboard: React.FC = () => (
-  <DashboardWrapper
-    title="Mentor Evaluation Hub"
-    subtitle="Assess daily logs, coordinate project milestones, and provide review guidance."
-    icon={<CheckCircle2 className="h-8 w-8" />}
-  />
-);
+// AdminDashboard placeholder removed — replaced by MentorLayout + mentor sub-routes.
 
 const InternDashboard: React.FC = () => (
   <DashboardWrapper
@@ -204,14 +221,26 @@ function App() {
               {/* Unmatched admin sub-paths → overview */}
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
+            {/* ---------------------------------------------------------------- */}
+            {/* Mentor Dashboard — protected, nested under MentorLayout         */}
+            {/* ---------------------------------------------------------------- */}
             <Route
-              path="/mentor/*"
+              path="/mentor"
               element={
                 <RouteGuard allowedRoles={['MENTOR']}>
-                  <MentorDashboard />
+                  <MentorLayout />
                 </RouteGuard>
               }
-            />
+            >
+              <Route index element={<MentorOverviewPage />} />
+              <Route path="interns" element={<MentorInternsPage />} />
+              <Route path="reports" element={<MentorReportsPage />} />
+              <Route path="projects" element={<MentorProjectsPage />} />
+              <Route path="notifications" element={<MentorNotificationsPage />} />
+              <Route path="profile" element={<MentorProfilePage />} />
+              {/* Unmatched mentor sub-paths → overview */}
+              <Route path="*" element={<Navigate to="/mentor" replace />} />
+            </Route>
             <Route
               path="/intern/*"
               element={

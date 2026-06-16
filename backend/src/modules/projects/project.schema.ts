@@ -160,6 +160,14 @@ export const fileIdParamSchema = z.object({
   fileId: z.string().uuid('fileId must be a valid UUID'),
 });
 
+// ── Combined param schema for routes with both :projectId and :milestoneId ──────
+// Replaces two sequential validate() calls that would overwrite req.params.
+
+export const projectMilestoneParamSchema = z.object({
+  projectId: z.string().uuid('projectId must be a valid UUID'),
+  milestoneId: z.string().uuid('milestoneId must be a valid UUID'),
+});
+
 // ── Inferred Types ──────────────────────────────────────────────────────────────
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
