@@ -26,6 +26,7 @@ import {
   attendanceHistoryQuerySchema,
   monthlyQuerySchema,
   adminAttendanceQuerySchema,
+  editAttendanceBodySchema,
 }                                    from './attendance.schema';
 import * as AttendanceController     from './attendance.controller';
 
@@ -141,6 +142,31 @@ router.get(
   authenticate,
   adminOrMentor,
   AttendanceController.getInternSummary,
+);
+
+/**
+ * @route  PATCH /api/v1/attendance/:recordId/edit
+ * @access ADMIN | MENTOR
+ * @desc   Edit intern's check-in/out and recalculate hours.
+ */
+router.patch(
+  '/:recordId/edit',
+  authenticate,
+  adminOrMentor,
+  validate(editAttendanceBodySchema, 'body'),
+  AttendanceController.editAttendance,
+);
+
+/**
+ * @route  POST /api/v1/attendance/:recordId/reopen
+ * @access ADMIN | MENTOR
+ * @desc   Clear check-out to allow one additional check-out.
+ */
+router.post(
+  '/:recordId/reopen',
+  authenticate,
+  adminOrMentor,
+  AttendanceController.reopenAttendance,
 );
 
 // ─────────────────────────────────────────────────────────────────────────────

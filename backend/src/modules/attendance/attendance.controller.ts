@@ -212,3 +212,42 @@ export async function getAllAttendance(
     next(err);
   }
 }
+
+// ── MENTOR: Edit Attendance Record ──────────────────────────────────────────
+
+export async function editAttendance(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { recordId } = req.params as { recordId: string };
+    const { checkIn, checkOut, correctionReason } = req.body;
+
+    const record = await AttendanceService.editAttendance(recordId, req.user!.id, req.user!.role, {
+      checkIn,
+      checkOut,
+      correctionReason,
+    });
+
+    sendSuccess(res, record, 'Attendance record updated successfully.');
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── MENTOR: Reopen Attendance Record ────────────────────────────────────────
+
+export async function reopenAttendance(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { recordId } = req.params as { recordId: string };
+    const record = await AttendanceService.reopenAttendance(recordId, req.user!.id, req.user!.role);
+    sendSuccess(res, record, 'Attendance record reopened successfully.');
+  } catch (err) {
+    next(err);
+  }
+}

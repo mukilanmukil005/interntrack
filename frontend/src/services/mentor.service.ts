@@ -148,3 +148,46 @@ export const reviewMilestone = async (
   );
   return response.data.data;
 };
+
+/** Fetch specific intern's attendance history */
+export const getInternAttendanceHistory = async (
+  internUserId: string,
+  params?: { page?: number; limit?: number; month?: number; year?: number }
+): Promise<{
+  data: any[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}> => {
+  const response = await api.get(`/attendance/intern/${internUserId}`, { params });
+  return {
+    data: response.data.data.records ?? [],
+    pagination: response.data.data.pagination,
+  };
+};
+
+/** Edit an intern's attendance check-in/out and recalculate hours */
+export const editInternAttendance = async (
+  recordId: string,
+  payload: {
+    checkIn: string;
+    checkOut: string | null;
+    correctionReason: string;
+  }
+): Promise<any> => {
+  const response = await api.patch(`/attendance/${recordId}/edit`, payload);
+  return response.data.data;
+};
+
+/** Reopen an intern's attendance to clear checkout and allow checkout again */
+export const reopenInternAttendance = async (
+  recordId: string
+): Promise<any> => {
+  const response = await api.post(`/attendance/${recordId}/reopen`);
+  return response.data.data;
+};

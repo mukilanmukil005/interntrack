@@ -170,7 +170,7 @@ export const AdminProjectsPage: React.FC = () => {
     setProjDomain(project.domain);
     setProjStartDate(project.startDate.substring(0, 10));
     setProjEndDate(project.endDate.substring(0, 10));
-    setProjInternId(project.intern?.userId ?? '');
+    setProjInternId(project.intern?.id ?? '');
     setProjRepoUrl(project.repoUrl || '');
     setProjStatus(project.status);
     setFormError(null);

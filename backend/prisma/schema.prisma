@@ -174,15 +174,17 @@ model InternshipProgram {
 // ═══════════════════════════════════════════
 
 model Attendance {
-  id          String           @id @default(uuid())
-  internId    String           @map("intern_id")
-  date        DateTime         @db.Date
-  checkIn     DateTime         @map("check_in")
-  checkOut    DateTime?        @map("check_out")
-  hoursWorked Decimal?         @map("hours_worked") @db.Decimal(5, 2)
-  status      AttendanceStatus @default(PRESENT)
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  id               String           @id @default(uuid())
+  internId         String           @map("intern_id")
+  date             DateTime         @db.Date
+  checkIn          DateTime         @map("check_in")
+  checkOut         DateTime?        @map("check_out")
+  hoursWorked      Decimal?         @map("hours_worked") @db.Decimal(5, 2)
+  status           AttendanceStatus @default(PRESENT)
+  correctionReason String?          @map("correction_reason") @db.Text
+  reopenCount      Int              @default(0) @map("reopen_count")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
 
   intern InternProfile @relation(fields: [internId], references: [id], onDelete: Cascade)
 
