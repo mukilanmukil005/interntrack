@@ -45,6 +45,7 @@ import {
   projectIdParamSchema,
   milestoneIdParamSchema,
   fileIdParamSchema,
+  projectMilestoneParamSchema,
 } from './project.schema';
 import * as projectController from './project.controller';
 
@@ -132,8 +133,7 @@ router.patch(
   '/:projectId/milestones/:milestoneId/review',
   authenticate,
   mentorOnly,
-  validate(projectIdParamSchema, 'params'),
-  validate(milestoneIdParamSchema, 'params'),
+  validate(projectMilestoneParamSchema, 'params'),
   validate(reviewMilestoneSchema, 'body'),
   projectController.reviewMilestone,
 );
@@ -203,8 +203,7 @@ router.patch(
   '/:projectId/milestones/:milestoneId',
   authenticate,
   adminOnly,
-  validate(projectIdParamSchema, 'params'),
-  validate(milestoneIdParamSchema, 'params'),
+  validate(projectMilestoneParamSchema, 'params'),
   validate(updateMilestoneSchema, 'body'),
   projectController.updateMilestone,
 );
@@ -218,8 +217,7 @@ router.delete(
   '/:projectId/milestones/:milestoneId',
   authenticate,
   adminOnly,
-  validate(projectIdParamSchema, 'params'),
-  validate(milestoneIdParamSchema, 'params'),
+  validate(projectMilestoneParamSchema, 'params'),
   projectController.deleteMilestone,
 );
 

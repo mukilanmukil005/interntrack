@@ -4,13 +4,13 @@
 // =============================================================================
 
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PublicLayout } from './layouts/PublicLayout';
 import { RouteGuard } from './layouts/RouteGuard';
 import { AdminLayout } from './layouts/AdminLayout';
-import { useAuth } from './hooks/useAuth';
-import { LogOut, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { MentorLayout } from './layouts/MentorLayout';
+import { InternLayout } from './layouts/InternLayout';
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded Public pages
@@ -53,6 +53,59 @@ const AdminProfilePage = React.lazy(() =>
   import('./pages/admin/AdminProfilePage').then((m) => ({ default: m.AdminProfilePage }))
 );
 
+// ---------------------------------------------------------------------------
+// Lazy-loaded Mentor pages
+// ---------------------------------------------------------------------------
+const MentorOverviewPage = React.lazy(() =>
+  import('./pages/mentor/MentorOverviewPage').then((m) => ({ default: m.MentorOverviewPage }))
+);
+const MentorInternsPage = React.lazy(() =>
+  import('./pages/mentor/MentorInternsPage').then((m) => ({ default: m.MentorInternsPage }))
+);
+const MentorReportsPage = React.lazy(() =>
+  import('./pages/mentor/MentorReportsPage').then((m) => ({ default: m.MentorReportsPage }))
+);
+const MentorProjectsPage = React.lazy(() =>
+  import('./pages/mentor/MentorProjectsPage').then((m) => ({ default: m.MentorProjectsPage }))
+);
+const MentorNotificationsPage = React.lazy(() =>
+  import('./pages/mentor/MentorNotificationsPage').then((m) => ({ default: m.MentorNotificationsPage }))
+);
+const MentorProfilePage = React.lazy(() =>
+  import('./pages/mentor/MentorProfilePage').then((m) => ({ default: m.MentorProfilePage }))
+);
+const MentorAttendancePage = React.lazy(() =>
+  import('./pages/mentor/MentorAttendancePage').then((m) => ({ default: m.MentorAttendancePage }))
+);
+
+// ---------------------------------------------------------------------------
+// Lazy-loaded Intern pages
+// ---------------------------------------------------------------------------
+const InternOverviewPage = React.lazy(() =>
+  import('./pages/intern/InternOverviewPage').then((m) => ({ default: m.InternOverviewPage }))
+);
+const InternProjectPage = React.lazy(() =>
+  import('./pages/intern/InternProjectPage').then((m) => ({ default: m.InternProjectPage }))
+);
+const InternProgressPage = React.lazy(() =>
+  import('./pages/intern/InternProgressPage').then((m) => ({ default: m.InternProgressPage }))
+);
+const InternReportsPage = React.lazy(() =>
+  import('./pages/intern/InternReportsPage').then((m) => ({ default: m.InternReportsPage }))
+);
+const InternAttendancePage = React.lazy(() =>
+  import('./pages/intern/InternAttendancePage').then((m) => ({ default: m.InternAttendancePage }))
+);
+const InternFilesPage = React.lazy(() =>
+  import('./pages/intern/InternFilesPage').then((m) => ({ default: m.InternFilesPage }))
+);
+const InternNotificationsPage = React.lazy(() =>
+  import('./pages/intern/InternNotificationsPage').then((m) => ({ default: m.InternNotificationsPage }))
+);
+const InternProfilePage = React.lazy(() =>
+  import('./pages/intern/InternProfilePage').then((m) => ({ default: m.InternProfilePage }))
+);
+
 // Loading Fallback spinner
 const LoadingFallback = () => (
   <div className="min-h-[60vh] bg-slate-950 flex flex-col items-center justify-center text-slate-100">
@@ -61,112 +114,13 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Inline Dashboard Placeholders (Clean & Premium looking)
-const DashboardWrapper: React.FC<{ title: string; subtitle: string; icon: React.ReactNode; children?: React.ReactNode }> = ({
-  title,
-  subtitle,
-  icon,
-  children,
-}) => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Mini header */}
-      <header className="border-b border-slate-900 bg-slate-900/40 py-4 px-6 sm:px-10 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-indigo-600/10 rounded-lg border border-indigo-500/20">
-            <GraduationCap className="h-5 w-5 text-indigo-400" />
-          </div>
-          <span className="font-bold text-slate-200 tracking-tight">InternTrack</span>
-        </Link>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-900/30 transition-all duration-200"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Sign Out
-        </button>
-      </header>
-
-      {/* Main dashboard content */}
-      <main className="flex-grow p-6 sm:p-10 max-w-5xl mx-auto w-full flex flex-col justify-center">
-        <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-800/80 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
-            <div className="p-4 bg-indigo-600/10 rounded-2xl border border-indigo-500/20 text-indigo-400">
-              {icon}
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400 bg-indigo-950/40 px-2.5 py-1 rounded border border-indigo-900/30">
-                Authorized: {user?.role} Portal
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-3">
-                {title}
-              </h1>
-              <p className="text-slate-400 text-sm mt-1">{subtitle}</p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-950 border border-slate-850 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-200">Session Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-850">
-                <span className="text-xs text-slate-400 block mb-0.5">Signed In User</span>
-                <span className="font-semibold text-slate-250">
-                  {user?.firstName} {user?.lastName}
-                </span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-850">
-                <span className="text-xs text-slate-400 block mb-0.5">Email Address</span>
-                <span className="font-semibold text-slate-250">{user?.email}</span>
-              </div>
-            </div>
-            {children}
-          </div>
-
-          <div className="mt-8 p-4 rounded-xl bg-indigo-950/20 border border-indigo-900/30 text-xs text-indigo-300">
-            Note: This interface represents a routing placeholder. Backend APIs and schemas are fully integrated and secure. Dashboard functionality (Progress Tracking panels, daily review actions, project tasks) will be implemented in subsequent phases.
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
 
 // AdminDashboard placeholder removed — replaced by AdminLayout + admin sub-routes below.
 
-const MentorDashboard: React.FC = () => (
-  <DashboardWrapper
-    title="Mentor Evaluation Hub"
-    subtitle="Assess daily logs, coordinate project milestones, and provide review guidance."
-    icon={<CheckCircle2 className="h-8 w-8" />}
-  />
-);
+// AdminDashboard placeholder removed — replaced by MentorLayout + mentor sub-routes.
 
-const InternDashboard: React.FC = () => (
-  <DashboardWrapper
-    title="Intern Learning Space"
-    subtitle="Track hours logged, submit daily achievement reports, and follow assigned milestones."
-    icon={<GraduationCap className="h-8 w-8 text-indigo-400" />}
-  >
-    <div className="p-4 rounded-xl bg-slate-900 border border-slate-850 text-sm">
-      <span className="text-xs text-slate-400 block mb-1">Academic Profile Details</span>
-      <div className="space-y-1.5 text-slate-300">
-        <p>🏫 <span className="font-medium">College:</span> {useAuth().user?.internProfile?.college || 'Pending Assignment'}</p>
-        <p>💻 <span className="font-medium">Domain:</span> {useAuth().user?.internProfile?.domain || 'Pending Assignment'}</p>
-        <p>📊 <span className="font-medium">Status:</span> <span className="text-indigo-400 font-bold uppercase">{useAuth().user?.internProfile?.status || 'PENDING'}</span></p>
-      </div>
-    </div>
-  </DashboardWrapper>
-);
+// InternDashboard placeholder removed — replaced by InternLayout + intern sub-routes.
 
 function App() {
   return (
@@ -204,22 +158,49 @@ function App() {
               {/* Unmatched admin sub-paths → overview */}
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
+            {/* ---------------------------------------------------------------- */}
+            {/* Mentor Dashboard — protected, nested under MentorLayout         */}
+            {/* ---------------------------------------------------------------- */}
             <Route
-              path="/mentor/*"
+              path="/mentor"
               element={
                 <RouteGuard allowedRoles={['MENTOR']}>
-                  <MentorDashboard />
+                  <MentorLayout />
                 </RouteGuard>
               }
-            />
+            >
+              <Route index element={<MentorOverviewPage />} />
+              <Route path="interns" element={<MentorInternsPage />} />
+              <Route path="reports" element={<MentorReportsPage />} />
+              <Route path="projects" element={<MentorProjectsPage />} />
+              <Route path="attendance" element={<MentorAttendancePage />} />
+              <Route path="notifications" element={<MentorNotificationsPage />} />
+              <Route path="profile" element={<MentorProfilePage />} />
+              {/* Unmatched mentor sub-paths → overview */}
+              <Route path="*" element={<Navigate to="/mentor" replace />} />
+            </Route>
+            {/* ---------------------------------------------------------------- */}
+            {/* Intern Dashboard — protected, nested under InternLayout          */}
+            {/* ---------------------------------------------------------------- */}
             <Route
-              path="/intern/*"
+              path="/intern"
               element={
                 <RouteGuard allowedRoles={['INTERN']}>
-                  <InternDashboard />
+                  <InternLayout />
                 </RouteGuard>
               }
-            />
+            >
+              <Route index element={<InternOverviewPage />} />
+              <Route path="project" element={<InternProjectPage />} />
+              <Route path="progress" element={<InternProgressPage />} />
+              <Route path="reports" element={<InternReportsPage />} />
+              <Route path="attendance" element={<InternAttendancePage />} />
+              <Route path="files" element={<InternFilesPage />} />
+              <Route path="notifications" element={<InternNotificationsPage />} />
+              <Route path="profile" element={<InternProfilePage />} />
+              {/* Unmatched intern sub-paths → overview */}
+              <Route path="*" element={<Navigate to="/intern" replace />} />
+            </Route>
 
             {/* Wildcard fallback to home */}
             <Route path="*" element={<Link to="/" className="hidden" />} />

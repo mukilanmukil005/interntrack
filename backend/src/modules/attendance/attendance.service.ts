@@ -14,6 +14,7 @@ import { Prisma, AttendanceStatus, InternStatus, Role } from '@prisma/client';
 import { prisma }                   from '../../config/database';
 import { AppError }                 from '../../utils/app-error';
 import { parsePagination, buildPaginationMeta } from '../../utils/pagination.util';
+import { createNotification } from '../notifications/notification.service';
 import type {
   AttendanceHistoryQuery,
   AdminAttendanceQuery,
@@ -207,7 +208,7 @@ export async function checkIn(userId: string) {
   if (existing) {
     throw AppError.conflict(
       existing.checkOut
-        ? 'You have already completed your attendance for today.'
+        ? 'Attendance already completed for today.'
         : 'You are already checked in. Please check out before checking in again.',
     );
   }
@@ -246,17 +247,40 @@ export async function checkOut(userId: string) {
   }
 
   if (existing.checkOut) {
-    throw AppError.conflict('You have already checked out today.');
+    throw AppError.conflict('Attendance already completed for today.');
   }
 
   const now          = new Date();
   const hoursWorked  = calcHoursWorked(existing.checkIn, now);
   const status       = resolveStatus(hoursWorked);
 
-  return prisma.attendance.update({
+  const updated = await prisma.attendance.update({
     where: { id: existing.id },
     data:  { checkOut: now, hoursWorked, status },
   });
+
+  const decimalHours = decimalToNumber(updated.hoursWorked);
+  if (decimalHours > 5) {
+    // 1. Intern Notification
+    await createNotification(
+      userId,
+      'Attendance Warning',
+      'You exceeded the recommended daily attendance duration of 5 hours.',
+      'ATTENDANCE_REMINDER'
+    ).catch(() => {});
+
+    // 2. Mentor Notification
+    if (profile.mentorId) {
+      await createNotification(
+        profile.mentorId,
+        'Intern Attendance Warning',
+        'Assigned intern exceeded the recommended daily attendance duration of 5 hours.',
+        'ATTENDANCE_REMINDER'
+      ).catch(() => {});
+    }
+  }
+
+  return updated;
 }
 
 // ── INTERN: Today's Record ───────────────────────────────────────────────────
@@ -496,4 +520,114 @@ export async function getAllAttendance(query: AdminAttendanceQuery) {
   ]);
 
   return { records, pagination: buildPaginationMeta(page, limit, total) };
+}
+
+// ── MENTOR: Edit Attendance Record ──────────────────────────────────────────
+
+export async function editAttendance(
+  recordId: string,
+  requesterId: string,
+  requesterRole: Role,
+  payload: {
+    checkIn?: string;
+    checkOut?: string | null;
+    correctionReason: string;
+  }
+) {
+  const record = await prisma.attendance.findUnique({
+    where: { id: recordId },
+    include: {
+      intern: true,
+    },
+  });
+
+  if (!record) {
+    throw AppError.notFound('Attendance record not found.');
+  }
+
+  if (requesterRole === Role.MENTOR && record.intern.mentorId !== requesterId) {
+    throw AppError.forbidden('This intern is not assigned to you.');
+  }
+
+  const updates: any = {
+    correctionReason: payload.correctionReason,
+  };
+
+  const newCheckIn = payload.checkIn ? new Date(payload.checkIn) : record.checkIn;
+  const newCheckOut = payload.checkOut === null ? null : payload.checkOut ? new Date(payload.checkOut) : record.checkOut;
+
+  updates.checkIn = newCheckIn;
+  updates.checkOut = newCheckOut;
+
+  if (newCheckIn && newCheckOut) {
+    updates.hoursWorked = calcHoursWorked(newCheckIn, newCheckOut);
+    updates.status = resolveStatus(updates.hoursWorked);
+  } else {
+    updates.hoursWorked = null;
+    updates.status = AttendanceStatus.PRESENT;
+  }
+
+  const updated = await prisma.attendance.update({
+    where: { id: recordId },
+    data: updates,
+  });
+
+  const formattedDate = record.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  await createNotification(
+    record.intern.userId,
+    'Attendance Record Updated',
+    `Your attendance for ${formattedDate} has been edited by your mentor. Reason: ${payload.correctionReason}`,
+    'GENERAL'
+  ).catch(() => {});
+
+  return updated;
+}
+
+// ── MENTOR: Reopen Attendance Record ────────────────────────────────────────
+
+export async function reopenAttendance(
+  recordId: string,
+  requesterId: string,
+  requesterRole: Role
+) {
+  const record = await prisma.attendance.findUnique({
+    where: { id: recordId },
+    include: {
+      intern: true,
+    },
+  });
+
+  if (!record) {
+    throw AppError.notFound('Attendance record not found.');
+  }
+
+  if (requesterRole === Role.MENTOR && record.intern.mentorId !== requesterId) {
+    throw AppError.forbidden('This intern is not assigned to you.');
+  }
+
+  if (record.reopenCount >= 1) {
+    throw AppError.badRequest('Maximum 1 reopen per attendance record.');
+  }
+
+  const updated = await prisma.attendance.update({
+    where: { id: recordId },
+    data: {
+      checkOut: null,
+      hoursWorked: null,
+      status: AttendanceStatus.PRESENT,
+      reopenCount: {
+        increment: 1
+      }
+    },
+  });
+
+  const formattedDate = record.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  await createNotification(
+    record.intern.userId,
+    'Attendance Session Reopened',
+    `Your attendance session for ${formattedDate} has been reopened. You may check out again.`,
+    'ATTENDANCE_REMINDER'
+  ).catch(() => {});
+
+  return updated;
 }

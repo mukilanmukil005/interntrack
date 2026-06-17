@@ -70,8 +70,15 @@ export const internUserIdParamSchema = z.object({
   userId: z.string().min(1, 'Intern user ID is required'),
 });
 
-// ── Inferred types ────────────────────────────────────────────────────────────
+// ── Mentor Edit Attendance Schema ─────────────────────────────────────────────
+
+export const editAttendanceBodySchema = z.object({
+  checkIn: z.string().min(1, 'checkIn is required'),
+  checkOut: z.string().nullable().optional(),
+  correctionReason: z.string().min(3, 'Correction reason must be at least 3 characters long.'),
+});
 
 export type AttendanceHistoryQuery = z.infer<typeof attendanceHistoryQuerySchema>;
 export type MonthlyQuery           = z.infer<typeof monthlyQuerySchema>;
 export type AdminAttendanceQuery   = z.infer<typeof adminAttendanceQuerySchema>;
+export type EditAttendanceBody     = z.infer<typeof editAttendanceBodySchema>;
